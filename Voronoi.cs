@@ -15,25 +15,64 @@ public class Parabola{
 	public Parabola(Vector2 p) {point = p;}
 }
 
+public class Event{
+	public enum Type{
+		Site, // New point encountered
+		Circle, // 3 sites on the same circle : end on an edge
+		End // last event
+	}
+
+	public Vector2 point;
+	public Type type;
+
+	public Event(Vector2 p, Type t) {point = p; type = t;}
+}
+
 public class Voronoi{
 
-	//private List<Vector2> m_vertices;
+	private List<Vector2> m_beachLineSites;
 	private List<Vector2> m_sites;
 	private List<LineSegment> m_edges;
 
 	// We assume that we are in a rectangle and the sweepline goes from left to right
 	Rect m_area;
+	float m_sweepLineX;
 
 	public Voronoi(Rect area, List<Vector2> sites)
 	{
 		m_area = area;
 		m_sites = sites;
 		Sorting.QuickSort(m_sites, 0, m_sites.Count - 1);
+
+		m_sweepLineX = m_area.left;
+		m_beachLineSites = new List<Vector2>();
 	}
-		
+
+	private Event NextEvent()
+	{
+		return new Event(Vector2.zero, Event.Type.End);
+	}
+
 	public List<LineSegment> Diagram()
 	{
-
+		bool done = false;
+		while(!done)
+		{
+			// Seek next event
+			Event e = NextEvent();
+			switch(e.type)
+			{
+			case Event.Type.Site:
+				// Site event (new point) : add a Parabola for the point
+				break;
+			case Event.Type.Circle:
+				// Circle event (3 sites on the same circle) : Remove Parabola for the first point encountered
+				break;
+			case Event.Type.End:
+				done = true;
+				break;
+			}
+		}
 		return m_edges;
 	}
 
@@ -52,12 +91,12 @@ public class Voronoi{
 		float x2 = p2.point.x;
 		float y1 = p1.point.y;
 		float y2 = p2.point.y;
-		Point p = p1.point;
+		Vector2 p = p1.point;
 
 		// specific and zero-divider cases
 		if (x1 == x2)
 		{
-			result.y = (y1 + y2) / 2.0;
+			result.y = (y1 + y2) / 2.0f;
 		}
 		else if (x1 == slx)
 		{
