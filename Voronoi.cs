@@ -124,4 +124,30 @@ public class Voronoi{
 		result.x = ((p.y*p.y - result.y*result.y) + p.x*p.x - slx*slx) / (2*(p.x - slx));
 		return result;
 	}
+
+	private Vector2 CircleCenter(Vector2 a, Vector2 b, Vector2 c)
+	{
+		Vector2 result = new Vector2(-1.0f,-1.0f);
+
+		float Xba = b.x - a.x;
+		float Xca = c.x - a.x;
+		float Yba = b.y - a.y;
+		float Yca = c.y - a.y;
+
+		// check division by zero
+		float d = 2*(Yba*Xca - Yca*Xba);
+		if ( d == 0 )
+			return result;
+
+		float Yca2 = c.y*c.y - a.y*a.y;
+		float Xca2 = c.x*c.x - a.x*a.x;
+		float Yba2 = b.y*b.y - a.y*a.y;
+		float Xba2 = b.x*b.x - a.x*a.x;
+
+		float n = Xba*(Yca2+Xca2) - Xca*(Yba2+Xba2);
+
+		result.y = n/d;
+		result.x = (Yba2 + 2*result.y*Yba + Xba2) / (2*Xba);
+		return result;
+	}
 }
