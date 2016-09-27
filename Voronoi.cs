@@ -9,23 +9,17 @@ public struct LineSegment{
 
 public class Parabola{
 	public Vector2 point;
-	public Parabola left = null;
-	public Parabola right = null;
+	public Parabola previous = null;
+	public Parabola next = null;
 
 	public Parabola(Vector2 p) {point = p;}
 }
 
 public class Event{
-	public enum Type{
-		Site, // New point encountered
-		Circle, // 3 sites on the same circle : end on an edge
-		End // last event
-	}
-
 	public Vector2 point;
-	public Type type;
+	public Vector2 breakPoint;
 
-	public Event(Vector2 p, Type t) {point = p; type = t;}
+	public Event(Vector2 p, Vector2 bp) {point = p ; breakPoint = bp;}
 }
 
 public class Voronoi{
@@ -33,6 +27,9 @@ public class Voronoi{
 	private List<Vector2> m_beachLineSites;
 	private List<Vector2> m_sites;
 	private List<LineSegment> m_edges;
+	private List<Event> m_events;
+	// First parabola of the beachline
+	private Parabola m_root;
 
 	// We assume that we are in a rectangle and the sweepline goes from left to right
 	Rect m_area;
@@ -50,30 +47,53 @@ public class Voronoi{
 
 	private Event NextEvent()
 	{
-		return new Event(Vector2.zero, Event.Type.End);
+		return new Event(Vector2.zero, Vector2.zero);
 	}
 
 	public List<LineSegment> Diagram()
 	{
-		bool done = false;
-		while(!done)
+		while (m_sites.Count != 0)
 		{
-			// Seek next event
-			Event e = NextEvent();
-			switch(e.type)
-			{
-			case Event.Type.Site:
-				// Site event (new point) : add a Parabola for the point
-				break;
-			case Event.Type.Circle:
-				// Circle event (3 sites on the same circle) : Remove Parabola for the first point encountered
-				break;
-			case Event.Type.End:
-				done = true;
-				break;
-			}
+			// Process circle events prior to sites event
+			if (m_events.Count != 0 && m_events[0].point.x <= m_sites[0].x)
+				ProcessEvent();
+			else
+				ProcessSite();
 		}
 		return m_edges;
+	}
+
+	private void ProcessEvent()
+	{
+
+	}
+
+	private void ProcessSite()
+	{
+		Vector2 site = m_sites[0];
+		m_sweepLineX = site.x;
+		m_sites.RemoveAt(0);
+		AddParabola(site);
+	}
+
+	private void AddParabola(Vector2 point)
+	{
+		if (m_root != null)
+		{
+			m_root = new Parabola(point);
+			return;
+		}
+
+		Parabola para = new Parabola(point);
+
+		for (Parabola i = m_root ; i != null; i = i.next)
+		{
+			Vector2 intersection = ParabolaIntersection(i,para, m_sweepLineX);
+			if (IsValid(intersection))
+			{
+
+			}
+		}
 	}
 
 	/*
@@ -83,7 +103,7 @@ public class Voronoi{
 	*/
 	private Vector2 ParabolaIntersection( Parabola p1, Parabola p2, float slx /* SweepLineX */)
 	{
-		Vector2 result = Vector2.zero;
+		Vector2 result = new Vector2(-1.0f,-1.0f);
 		// Parabola equation for parabola 1:
 		// X = ((Y1² - Y²) + X1² - slx²) / 2( X1 - slx)
 
@@ -149,5 +169,10 @@ public class Voronoi{
 		result.y = n/d;
 		result.x = (Yba2 + 2*result.y*Yba + Xba2) / (2*Xba);
 		return result;
+	}
+
+	private bool IsValid(Vector2 p)
+	{
+		return (p.x >= 0 && p.y >= 0);
 	}
 }
