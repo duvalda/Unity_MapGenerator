@@ -13,6 +13,11 @@ public class Parabola{
 	public Parabola next = null;
 
 	public Parabola(Vector2 p) {point = p;}
+	public Parabola(Parabola para) {
+		point = para.point;
+		previous = para.previous;
+		next = para.next;
+	}
 }
 
 public class Event{
@@ -91,7 +96,14 @@ public class Voronoi{
 			Vector2 intersection = ParabolaIntersection(i,para, m_sweepLineX);
 			if (IsValid(intersection))
 			{
+				// Duplicate i and insert new parabola between i and i'
+				para.next = new Parabola(i);
 
+				para.next.previous = para;
+				i.next = para;
+				para.previous = i;
+
+				return;
 			}
 		}
 	}
@@ -173,6 +185,6 @@ public class Voronoi{
 
 	private bool IsValid(Vector2 p)
 	{
-		return (p.x >= 0 && p.y >= 0);
+		return m_area.Contains(p);
 	}
 }
