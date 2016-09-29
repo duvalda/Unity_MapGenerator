@@ -120,7 +120,7 @@ public class Voronoi{
 		}
 
 		// Add parabola to the end : find last parabola
-		for (i = m_root ; i.next ; i = i.next);
+		for (i = m_root ; i.next != null ; i = i.next);
 		i.next = para;
 		para.previous = i;
 	}
@@ -172,6 +172,26 @@ public class Voronoi{
 		}
 		result.x = ((p.y*p.y - result.y*result.y) + p.x*p.x - slx*slx) / (2*(p.x - slx));
 		return result;
+	}
+
+	private void CheckCircleEvent(Parabola p)
+	{
+		if ( p.previous == null || p.next == null)
+			return;
+
+		// center corresponds to the new breakpoint
+		Vector2 cc = CircleCenter(p.previous.point, p.point, p.next.point);
+		if (IsValid(cc))
+		{
+			// point event represents when the sweepline meets the event.
+			Vector2 point = new Vector2(cc.x + Distance(p.point, cc), cc.y);
+			m_events.Add(new Event(point,cc));
+		}
+	}
+
+	private float Distance(Vector2 a, Vector2 b)
+	{
+		return Mathf.Sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
 	}
 
 	private Vector2 CircleCenter(Vector2 a, Vector2 b, Vector2 c)
