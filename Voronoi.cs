@@ -29,7 +29,6 @@ public class Event{
 
 public class Voronoi{
 
-	private List<Vector2> m_beachLineSites;
 	private List<Vector2> m_sites;
 	private List<LineSegment> m_edges;
 	private List<Event> m_events;
@@ -47,7 +46,6 @@ public class Voronoi{
 		Sorting.QuickSort(m_sites, 0, m_sites.Count - 1);
 
 		m_sweepLineX = m_area.left;
-		m_beachLineSites = new List<Vector2>();
 	}
 
 	private Event NextEvent()
@@ -90,8 +88,10 @@ public class Voronoi{
 		}
 
 		Parabola para = new Parabola(point);
+		Parabola i;
 
-		for (Parabola i = m_root ; i != null; i = i.next)
+		// Look for intersections with the beach line
+		for (i = m_root ; i != null; i = i.next)
 		{
 			Vector2 intersection = ParabolaIntersection(i,para, m_sweepLineX);
 			if (IsValid(intersection))
@@ -106,6 +106,23 @@ public class Voronoi{
 				return;
 			}
 		}
+
+		// If no intersection in our area, find where to insert it
+		for (i = m_root ; i != null ; i = i.next)
+		{
+			if (para.point.y < i.point.y)
+			{
+				para.next = i;
+				i = para;
+				para.next.previous = para;
+				return;
+			}
+		}
+
+		// Add parabola to the end : find last parabola
+		for (i = m_root ; i.next ; i = i.next);
+		i.next = para;
+		para.previous = i;
 	}
 
 	/*
