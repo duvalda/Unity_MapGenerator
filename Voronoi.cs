@@ -7,6 +7,7 @@ public struct LineSegment{
 	public Vector2 left;
 }
 
+// Parabola represents half the distance between (each point of the) sweepline and a point
 public class Parabola{
 	public Vector2 point;
 	public Parabola previous = null;
@@ -20,11 +21,17 @@ public class Parabola{
 	}
 }
 
+// Circle Event
 public class Event{
-	public Vector2 point;
-	public Vector2 breakPoint;
+	public Vector2 point; // Where the event will meet the sweepline
+	public Vector2 breakPoint; // Where parabolas meet
+	public Parabola parabola; // The parabola who hold the event
 
-	public Event(Vector2 p, Vector2 bp) {point = p ; breakPoint = bp;}
+	public Event(Vector2 p, Vector2 bp, Parabola para){
+		point = p ;
+		breakPoint = bp;
+		parabola = para;
+	}
 }
 
 public class Voronoi{
@@ -46,13 +53,14 @@ public class Voronoi{
 		Sorting.QuickSort(m_sites, 0, m_sites.Count - 1);
 
 		m_sweepLineX = m_area.left;
+		m_edges = new List<LineSegment>();
 	}
 
-	private Event NextEvent()
-	{
-		return new Event(Vector2.zero, Vector2.zero);
-	}
-
+	/*
+	 * Diagram
+	 * We are using Fortune's algorithm
+	 * Returns the list of segments forming the voronoi diagram
+	 */
 	public List<LineSegment> Diagram()
 	{
 		while (m_sites.Count != 0)
@@ -68,7 +76,11 @@ public class Voronoi{
 
 	private void ProcessEvent()
 	{
-
+		Event e = m_events[0];
+		m_sweepLineX = e.point.x;
+		m_events.RemoveAt(0);
+		CreateSegment(e.parabola, e.breakPoint);
+		RemoveParabola(e.parabola);
 	}
 
 	private void ProcessSite()
@@ -77,6 +89,22 @@ public class Voronoi{
 		m_sweepLineX = site.x;
 		m_sites.RemoveAt(0);
 		AddParabola(site);
+	}
+
+	private void CreateSegment(Parabola p, Vector2 circleCenter)
+	{
+
+	}
+
+	private void RemoveParabola(Parabola para)
+	{
+		Parabola p = para.previous;
+		Parabola n = para.next;
+		n.previous = p;
+		p.next = n;
+
+		para.previous = null;
+		para.next = null;
 	}
 
 	private void AddParabola(Vector2 point)
@@ -128,7 +156,7 @@ public class Voronoi{
 	/*
 	* ParabolaIntersection
 	* Assuming the sweepline is vertical and the parabolas are on the left of it.
-	* Return the intersection between p1 and p2.
+	* Returns the intersection between p1 and p2.
 	*/
 	private Vector2 ParabolaIntersection( Parabola p1, Parabola p2, float slx /* SweepLineX */)
 	{
@@ -185,7 +213,10 @@ public class Voronoi{
 		{
 			// point event represents when the sweepline meets the event.
 			Vector2 point = new Vector2(cc.x + Distance(p.point, cc), cc.y);
-			m_events.Add(new Event(point,cc));
+			// Check if the point is located before the sweepline
+			if (point.x < m_sweepLineX)
+				return;
+			m_events.Add(new Event(point,cc,p));
 		}
 	}
 
